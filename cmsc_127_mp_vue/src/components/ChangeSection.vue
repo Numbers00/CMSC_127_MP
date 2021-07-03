@@ -75,8 +75,8 @@
           <div class='field d-flex flex-row'>
             <label class='label select-label'>Target</label>
             <div class='select'>
-              <select v-model='targetName' required>
-                  <option v-for='activeCard in activeCards' :value='activeCard.name' :key='activeCard.id'>{{activeCard.name}}</option>
+              <select v-model='targetID' required>
+                  <option v-for='activeCard in activeCards' :value='activeCard.id' :key='activeCard.id'>{{activeCard.name}}</option>
               </select>
             </div>
           </div>
@@ -105,8 +105,8 @@
           <div class='field d-flex flex-row'>
             <label class='label select-label'>Target</label>
             <div class='select'>
-              <select v-model='targetName' required>
-                  <option v-for='activeCard in activeCards' :value='activeCard.name' :key='activeCard.id'>{{activeCard.name}}</option>
+              <select v-model='targetID' required>
+                  <option v-for='activeCard in activeCards' :value='activeCard.id' :key='activeCard.id'>{{activeCard.name}}</option>
               </select>
             </div>
           </div>
@@ -143,9 +143,19 @@
           </div>
 
           <div class='field d-flex flex-row'>
-            <label class='label select-label'>Visible </label>
+            <label class='label select-label'>Visible</label>
             <div class='select'>
               <select v-model='isVisible' required>
+                <option value='Yes'>Yes</option>
+                <option value='No' selected='selected'>No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class='field d-flex flex-row'>
+            <label class='label select-label'>History</label>
+            <div class='select'>
+              <select v-model='isHistory' required>
                 <option value='Yes'>Yes</option>
                 <option value='No' selected='selected'>No</option>
               </select>
@@ -181,11 +191,12 @@ export default {
   data () {
     return {
       name: '',
-      targetName: '',
+      targetID: '',
       description: '',
       image: '',
       isMarked: '',
       isVisible: '',
+      isHistory: '',
       addErrors: [],
       removeErrors: [],
       updateErrors: [],
@@ -241,6 +252,9 @@ export default {
         }
         }).then(response => {
           this.addErrors = []
+
+          this.$emit('resendGet')
+
           toast({
             message: 'The card was added to the database',
             type: 'is-success',
@@ -249,12 +263,13 @@ export default {
             duration: 3000,
             position: 'bottom-right',
           })
-          this.targetName = ''
+          this.targetID = ''
           this.name = ''
           this.description = ''
           this.image = ''
           this.isMarked = ''
           this.isVisible = ''
+          this.isHistory = ''
         })
         .catch(error => {
           console.log(error)
@@ -275,28 +290,19 @@ export default {
         this.removeErrors.push("The Name Field's Maximum Length is 32!")
       }
 
-      let hasMatch = false
-
-      for (let card in this.activeCards) {
-        if (this.targetName === this.activeCards[card].name) {
-          hasMatch = true
-        }
-      }
-
-      if (!hasMatch) {
-        this.removeErrors.push("No matching Card found in Database!")
-      }
-
       if (!this.removeErrors.length) {
 
         await axios({
           method: 'delete',
           url: '/api/v1/cards/view/',
           data: {
-            target_card_name: this.targetName
+            target_card_id: this.targetID
           }
         }).then(response => {
           this.removeErrors = []
+
+          this.$emit('resendGet')
+
           toast({
                 message: 'The card was removed from the database',
                 type: 'is-success',
@@ -305,12 +311,13 @@ export default {
                 duration: 3000,
                 position: 'bottom-right',
           })
-          this.targetName = ''
+          this.targetID = ''
           this.name = ''
           this.description = ''
           this.image = ''
           this.isMarked = ''
           this.isVisible = ''
+          this.isHistory = ''
         })
         .catch(error => {
           console.log(error)
@@ -327,25 +334,14 @@ export default {
       this.addErrors = []
       this.removeErrors = []
 
-      if (this.targetName.length > 32 || this.name.length > 32) {
-        this.updateErrors.push("The Name Fields' Maximum Length is 32!")
-      }
-
-      let hasMatch = false
-
-      for (let card in this.activeCards) {
-        if (this.targetName === this.activeCards[card].name) {
-          hasMatch = true
-        }
-      }
-
-      if (!hasMatch) {
-        this.updateErrors.push("No matching Card found in Database!")
+      if (this.name.length > 32) {
+        this.updateErrors.push("The Name Field's Maximum Length is 32!")
       }
 
       if (!this.updateErrors.length) {
         let isMarked = (this.isMarked === 'Yes' ? true : false)
         let isVisible = (this.isVisible === 'Yes' ? true : false)
+        let isHistory = (this.isHistory === 'Yes' ? true : false)
 
         let image = this.image
 
@@ -368,23 +364,28 @@ export default {
         method: 'put',
         url: '/api/v1/cards/view/',
         data: {
-          target_card_name: this.targetName,
+          target_card_id: this.targetID,
           name: this.name,
           description: this.description,
           image: image,
           is_marked: isMarked,
           is_visible: isVisible,
+          is_history: isHistory,
           slug: this.slugify(this.name)
         }
         }).then(response => {
           this.updateErrors = []
-          this.targetName = ''
+
+          this.$emit('resendGet')
+
+          this.targetID = ''
           this.name = ''
           this.description = ''
           this.image = ''
           this.isMarked = ''
           this.isVisible = ''
-
+          this.isHistory = ''
+          
           toast({
             message: 'The card was updated in the database',
             type: 'is-success',

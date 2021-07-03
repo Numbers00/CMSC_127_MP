@@ -1,23 +1,113 @@
 <template>
 <div class="board">
 
-	<h3 class="board-title">{{board.name}}</h3>
+  <div 
+    class="board-title-div is-fullwidth d-flex flex-row" 
+    style="justify-content: space-between;"
+    @click="selectBoard(board)"
+  >
+    <div class="change-board">
+      <input 
+        class='input input-board' 
+        :placeholder="board.name" 
+        type='text' 
+        v-model='newBoard'
+        v-on:keyup.enter='!card.is_history ? (isEmpty ? addBoard(newBoard) : changeBoardName(newBoard)) : historyError'
+        ref="inputBoard"
+      >
+    </div>
+    <span v-if="!isEmpty">
+    <i 
+      class="times-icon fa fa-times is-size-3 mr-3 mt-3" 
+      style='color: white;'
+      @click="!card.is_history ? removeBoard(board.name) : historyError">
+    </i>
+    </span>
+    <span v-else>
+    <i 
+      class="plus-icon fa fa-plus is-size-3 mr-3 mt-3" 
+      style='color: white;'
+      @click="$refs.inputBoard[0].focus()">
+    </i>
+    </span>
+  </div>
 
 	<ul class="board-items">
-		<li v-for="task in tasks" :key="task">
-      {{task.name}}
-		</li>
+    <template v-for="task in tasks">
+		  <li 
+        class="d-flex flex-row" 
+        style="justify-content: space-between;"
+        v-if="task.is_marked && task.status === 'todo'"
+        :key="task.id"
+        @click="selectTask(task)"
+      >
+        {{task.name}}
+        <div class="d-flex flex-row">
+          <i class="far fa-circle"
+            @click="!card.is_history ? markTask(task) : historyError"
+            v-if="!task.is_marked"
+          >
+          </i>
+          <i 
+            class="fas fa-circle"
+            @click="!card.is_history ? markTask(task) : historyError"
+            v-if="task.is_marked"
+          >
+          </i>
+          <i 
+            class="times-icon fa fa-times ml-2" 
+            aria-hidden="true" 
+            @click="!card.is_history ? finishTask(task) : historyError"
+          >
+        </i>
+        </div>
+		  </li>
+    </template>
+    <template v-for="task in tasks">
+		  <li 
+        class="d-flex flex-row" 
+        style="justify-content: space-between;"
+        v-if="!task.is_marked && task.status === 'todo'"
+        :key="task.id"
+        @click="selectTask(task)"
+      >
+        {{task.name}}
+        <div class="d-flex flex-row">
+          <i class="far fa-circle"
+            @click="!card.is_history ? markTask(task) : historyError"
+            v-if="!task.is_marked"
+          >
+          </i>
+          <i 
+            class="fas fa-circle"
+            @click="!card.is_history ? markTask(task) : historyError"
+            v-if="task.is_marked"
+          >
+          </i>
+          <i 
+            class="times-icon fa fa-times ml-2" 
+            aria-hidden="true"
+            @click="!card.is_history ? finishTask(task) : historyError"
+          >
+        </i>
+        </div>
+		  </li>
+    </template>
 	</ul>
 
 	<div class="add-task">
-        <input 
-          class='input input-task' 
-          placeholder="Add a task..." 
-          type='text' 
-          v-model='newTask'
-          v-on:keyup.enter='addTask'
-        >
-    </div>
+    <input 
+      class='input input-task' 
+      placeholder="Add a task..." 
+      type='text' 
+      v-model='newTask'
+      v-on:keyup.enter='!card.is_history ? addTask : historyError'
+    >
+  </div>
+
+  <b-modal id="taskModal">
+    Clicked {{selectedTask.name}}!
+  </b-modal>
 </div>
 </template>
 
@@ -29,15 +119,37 @@ import {toast} from 'bulma-toast'
 export default {
     name: 'BoardBox',
     props: {
-        board: {},
-        tasks: []
+      card: Object,
+      board: Object,
+      tasks: Array,
+      isEmpty: Boolean
     },
     data () {
       return {
-        newTask: ''
+        newTask: '',
+        newBoard: '',
+        addBoardToggle: false,
+        selectedTask: {}
       }
     },
     methods: {
+      historyError () {
+        toast({
+          message: 'You are not allowed to edit history cards. You can try making the card active again in Your Cards by making History: No.',
+          type: 'is-danger',
+          dismissible: true,
+          pauseOnHover: true,
+          duration: 3000,
+          position: 'bottom-right',
+        })
+      },
+      selectTask (task) {
+        console.log('task')
+        this.$emit('selectTask', task, this.board)
+      },
+      selectBoard (board) {
+        this.$emit('selectBoard', board)
+      },
       async addTask () {
         this.$store.commit('setIsLoading', true)
 
@@ -45,12 +157,12 @@ export default {
         method: 'post',
         url: '/api/v1/tasks/view/',
         data: {
-          board: this.board.name,
+          target_board_id: this.board.id,
           name: this.newTask,
           description: '',
           is_marked: false,
           status: 'todo',
-          slug: this.slugify(this.name)
+          slug: this.slugify(this.newTask)
         }
         }).then(response => {
           toast({
@@ -62,11 +174,208 @@ export default {
             position: 'bottom-right',
           })
           this.newTask = ''
+
+          this.$emit('resendGet')
         })
         .catch(error => {
           console.log(error)
           toast({
               message: 'Something went wrong while uploading the new task. Please try again.',
+              type: 'is-danger',
+              dismissible: true,
+              pauseOnHover: true,
+              duration: 3000,
+              position: 'bottom-right',
+          })
+        })
+        this.$store.commit('setIsLoading', false)
+      },
+      async finishTask (task) {
+        this.$store.commit('setIsLoading', true)
+
+        await axios({
+        method: 'put',
+        url: '/api/v1/tasks/view/',
+        data: {
+          target_task_id: task.id,
+          target_board_id: this.board.id,
+          name: task.name,
+          description: task.description,
+          is_marked: task.is_marked,
+          status: 'done',
+          slug: this.slugify(task.name)
+        }
+        }).then(response => {
+          toast({
+            message: 'The task is now set to done in the database',
+            type: 'is-success',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+          })
+          this.newTask = ''
+
+          this.$emit('resendGet')
+        })
+        .catch(error => {
+          console.log(error)
+          toast({
+              message: 'Something went wrong while setting the task to done. Please try again.',
+              type: 'is-danger',
+              dismissible: true,
+              pauseOnHover: true,
+              duration: 3000,
+              position: 'bottom-right',
+          })
+        })
+        this.$store.commit('setIsLoading', false)
+      },
+      async markTask (task) {
+        this.$store.commit('setIsLoading', true)
+
+        await axios({
+        method: 'put',
+        url: '/api/v1/tasks/view/',
+        data: {
+          target_task_id: task.id,
+          target_board_id: this.board.id,
+          name: task.name,
+          description: task.description,
+          is_marked: !task.is_marked,
+          status: task.status,
+          slug: this.slugify(task.name)
+        }
+        }).then(response => {
+          toast({
+            message: "The task's mark has been successfully changed",
+            type: 'is-success',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+          })
+          this.newTask = ''
+
+          this.$emit('resendGet')
+        })
+        .catch(error => {
+          console.log(error)
+          toast({
+              message: 'Something went wrong while removing the new task. Please try again.',
+              type: 'is-danger',
+              dismissible: true,
+              pauseOnHover: true,
+              duration: 3000,
+              position: 'bottom-right',
+          })
+        })
+        this.$store.commit('setIsLoading', false)
+      },
+      async addBoard () {
+        this.$store.commit('setIsLoading', true)
+
+        await axios({
+        method: 'post',
+        url: '/api/v1/boards/view/',
+        data: {
+          target_card_id: this.card.id,
+          name: this.newBoard,
+          description: '',
+          slug: this.slugify(this.newBoard)
+        }
+        }).then(response => {
+          toast({
+            message: 'The board was added in the database',
+            type: 'is-success',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+          })
+          this.newBoard = ''
+
+          this.$emit('resendGet')
+        })
+        .catch(error => {
+          console.log(error)
+          toast({
+              message: 'Something went wrong while adding the board. Please try again.',
+              type: 'is-danger',
+              dismissible: true,
+              pauseOnHover: true,
+              duration: 3000,
+              position: 'bottom-right',
+          })
+        })
+        this.$store.commit('setIsLoading', false)
+      },
+      async removeBoard () {
+        this.$store.commit('setIsLoading', true)
+
+        await axios({
+        method: 'delete',
+        url: '/api/v1/boards/view/',
+        data: {
+          target_card_id: this.card.id,
+          id: this.board.id
+        }
+        }).then(response => {
+          toast({
+            message: 'The board was removed from the database',
+            type: 'is-success',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+          })
+          this.newBoard = ''
+
+          this.$emit('resendGet')
+        })
+        .catch(error => {
+          console.log(error)
+          toast({
+              message: 'Something went wrong while removing the board. Please try again.',
+              type: 'is-danger',
+              dismissible: true,
+              pauseOnHover: true,
+              duration: 3000,
+              position: 'bottom-right',
+          })
+        })
+        this.$store.commit('setIsLoading', false)
+      },
+      async changeBoardName () {
+        this.$store.commit('setIsLoading', true)
+
+        await axios({
+        method: 'put',
+        url: '/api/v1/boards/view/',
+        data: {
+          target_board_id: this.board.id,
+          target_card_id: this.card.id,
+          name: this.newBoard,
+          description: '',
+          slug: this.slugify(this.newBoard)
+        }
+        }).then(response => {
+          toast({
+            message: 'The board was updated in the database',
+            type: 'is-success',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+          })
+          this.newBoard = ''
+
+          this.$emit('resendGet')
+        })
+        .catch(error => {
+          console.log(error)
+          toast({
+              message: 'Something went wrong while updating the board. Please try again.',
               type: 'is-danger',
               dismissible: true,
               pauseOnHover: true,
@@ -141,7 +450,8 @@ export default {
 	border-bottom: 0.1rem solid #ccc;
 	border-radius: 0.3rem;
 	margin-bottom: 0.6rem;
-	word-wrap: break-word;
+  max-width: 300px;
+  overflow: auto;
 	cursor: pointer;
 }
 
@@ -151,6 +461,20 @@ export default {
 
 .board-items li:hover {
 	background-color: #eee;
+}
+
+.change-board {
+	color: white;
+	padding: 1rem;
+	cursor: pointer;
+  font-size: 1.4rem;
+	font-weight: 700;
+}
+
+.change-board:hover {
+	background-color: #A0A0A0;
+	color: #4d4d4d;
+	text-decoration: underline;
 }
 
 .add-task {
@@ -189,7 +513,31 @@ export default {
     color: white;
 }
 
+.input-board {
+    background-color: hsl(0,0%,21%);
+    width: 220px;
+    height: 40px;
+    border: none;
+    color: white;
+}
+
+.input-board::placeholder {
+  color: white;
+  padding: 1rem;
+	cursor: pointer;
+  font-size: 1.4rem;
+	font-weight: 700;
+}
+
 ::placeholder {
     color: white;
+}
+
+.plus-icon:hover {
+  cursor: pointer;
+}
+
+.times-icon:hover {
+  cursor: pointer;
 }
 </style>

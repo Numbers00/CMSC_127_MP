@@ -22,7 +22,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-t7@=p5=u(7g8k=$d_j!!k1ub1dt^)5oe4$b8k@89-)9)0#+asd'
+SECRET_KEY = 'django-insecure-@=wc29r_7m%!-v@^sw#8e@l6sb-g_iq1c$aq!q&%qa)b04y@_b'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,13 +46,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'djoser',
     'mathfilters',
+    'django_extensions',
 
     'task',
     'user'
 ]
 
 DJOSER = {
-    'SEND_CONFIRMATION_EMAIL': True,
+    # 'SEND_CONFIRMATION_EMAIL': True,
     'SERIALIZERS': {
         'user_registration': 'user.serializers.UserSerializer',
     }
@@ -107,11 +108,14 @@ WSGI_APPLICATION = 'cmsc_127_mp_django.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'cmsc_127_mp',
+        'USER': 'postgres',
+        'PASSWORD': 'PostgresTangerine64',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
@@ -158,14 +162,14 @@ MEDIA_ROOT = BASE_DIR / 'media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#SMTP Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
-EMAIL_HOST_USER = 'kylemariangelo@gmail.com'
-EMAIL_HOST_PASSWORD = 'Imaginebreaker'
+# SMTP Configuration
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_USE_SSL = False
+# EMAIL_HOST_USER = 'kylemariangelo@gmail.com'
+# EMAIL_HOST_PASSWORD = 'Imaginebreaker'
 
-if os.getcwd() == '/app':
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PHOTO')
+# if os.getcwd() == '/app':
+#     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PHOTO')

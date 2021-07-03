@@ -419,9 +419,11 @@ export default {
         const formData = {
           username: this.username,
           email: this.email,
-          bio: this.bio,
+          bio: '',
+          quote: '',
           profile_picture: profile_picture,
           bg_image: bg_image,
+          is_visible: false,
           plan_level: this.plan_level,
           password: this.password1,
           slug: this.slugify(this.username)

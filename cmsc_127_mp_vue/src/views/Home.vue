@@ -4,7 +4,7 @@
   <router-link to='/your-cards' class='button is-success col-12' style="color: white; border-radius: 10px; padding: 6px; margin-bottom: 0; position: relative; bottom: 20px;" id='update-button'>
     Check Your Cards Here
   </router-link>
-  <swiper id='top-cards-swiper' v-if="countMarkedCards() !== 0" class="swiper mt-5" style="height: 300px" :options="swiperOption">
+  <swiper id='top-cards-swiper' v-if="activeCards.length !== 0" class="swiper mt-5" style="height: 300px" :options="swiperOption">
       <swiper-slide
         v-for="(card, index) in activeCards"
         :key="index"
@@ -12,16 +12,18 @@
         <CardBox
           :card="card"
           :myDetails="myDetails"
+          v-on:resendGet="resendGet"
         />
       </swiper-slide>
-      <template v-if="countMarkedCards() < 6">
+      <template v-if="activeCards.length < 6">
         <swiper-slide 
-          v-for="n in 6 - countMarkedCards()"
+          v-for="n in 6 - activeCards.length"
           :key="n"
         >
           <CardBox
             :card="emptyCard"
             :myDetails="myDetails"
+            v-on:resendGet="resendGet"
           />
         </swiper-slide>
       </template>
@@ -170,6 +172,13 @@ export default {
     }
   },
   methods: {
+    resendGet () {
+      this.activeCards = []
+
+      this.getActiveCards()
+
+      this.$emit('resendGet')
+    },
     async getActiveCards () {
       this.$store.commit('setIsLoading', true)
 

@@ -7,7 +7,7 @@
           <div class="col-12 rounded">
               <div class="col-12 rounded" style="padding: 20px 10px 20px 10px;">
                   <div class="d-flex flex-column align-items-center text-center">
-                      <img :src="userDetails.profile_picture"
+                      <img :src="profilePicture"
                           alt="User" class="rounded-circle" style="min-width: 150px; width: 150px; max-width: 150px; min-height: 150px; height: 150px; max-height: 150px;">
                       <div class="mt-3">
                           <h4>{{userDetails.username}}</h4>
@@ -22,7 +22,7 @@
               <br>
               <h5 style="text-align: center;">Total Cards</h5>
               <hr>
-              <h1 style="text-align: center; padding-top: 20px; font-family: Quicksand;">{{inactiveCards.length}}</h1>
+              <h1 style="text-align: center; padding-top: 20px; font-family: Quicksand;">{{activeCards.length}}</h1>
               <br>
               <h6 style="text-align: center; text-transform:uppercase; letter-spacing: 2px;">Active Cards</h6>
               <h1 style="text-align: center; padding-top: 20px; font-family: Quicksand;">{{inactiveCards.length}}</h1>
@@ -68,15 +68,6 @@
               </div>
               <div class="col-sm-9 text-secondary">
                 {{userDetails.plan_level}}
-              </div>
-            </div>
-            <hr>
-            <div class="row">
-              <div class="col-sm-3">
-                <h6 class="mb-0">Date Joined</h6>
-              </div>
-              <div class="col-sm-9 text-secondary">
-                {{userDetails.date_joined.substring(0, 10)}}
               </div>
             </div>
             <hr>
@@ -134,7 +125,6 @@ export default {
     },
     data () {
         return {
-            orders: [],
             userDetails: {},
             activeCards: [],
             inactiveCards: []
@@ -149,6 +139,14 @@ export default {
     watch: {
       userDetails () {
         console.log(this.userDetails)
+      }
+    },
+    computed: {
+      profilePicture () {
+        if (this.userDetails.profile_picture === '' || this.userDetails.profile_picture === null) {
+          return 'https://s.gr-assets.com/assets/nophoto/user/u_200x266-e183445fd1a1b5cc7075bb1cf7043306.png'
+        }
+        else return this.userDetails.profile_picture
       }
     },
     methods: {
@@ -189,10 +187,24 @@ export default {
       },
       async getMyDetails () {
         this.$store.commit('setIsLoading', true)
-        await axios
-          .get('api/v1/users/')
+        await axios({
+          method: 'get',
+          url: 'api/v1/users/',
+          auth: {
+            username: 'Pupumaru00',
+            password: 'Parerun806!'
+          }
+          })
           .then(response => {
-              this.userDetails = response.data[0]
+            console.log(response.data)
+            console.log(this.$store.state.token)
+            console.log(localStorage.getItem('username'))
+            for (let data in response.data) {
+              console.log(response.data[data])
+              if (localStorage.getItem('username') === response.data[data].username) {
+                this.userDetails = response.data[data]
+              }
+            }
           })
           .catch(error => {
               console.log(error)

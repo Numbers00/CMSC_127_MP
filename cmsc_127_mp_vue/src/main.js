@@ -13,6 +13,8 @@ import VueAwesomeSwiper from 'vue-awesome-swiper'
 // import style (>= Swiper 6.x)
 import 'swiper/swiper-bundle.min.css'
 
+import UUID from "vue-uuid"
+
 import axios from 'axios'
 
 import App from './App.vue'
@@ -23,6 +25,8 @@ Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 
 Vue.use(VueAwesomeSwiper)
+
+Vue.use(UUID)
 
 Vue.config.productionTip = false
 

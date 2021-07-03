@@ -151,6 +151,7 @@ export default {
             const token = response.data.auth_token
             this.$store.commit('setToken', token)
             axios.defaults.headers.common['Authorization'] = 'Token ' + token
+            localStorage.setItem('username', this.username)
             localStorage.setItem('token', token)
             
             const toPath = this.$route.query.to || '/'

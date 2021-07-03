@@ -1,18 +1,19 @@
 <template>
 <div class="wrapper">
   <TopSection viewType="YourCards" />
-  <swiper id='top-cards-swiper' v-if="countMarkedCards() !== 0" class="swiper mt-5" style="height: 300px" :options="swiperOption">
+  <swiper id='top-cards-swiper' v-if="activeCards.length !== 0" class="swiper mt-5" style="height: 300px" :options="swiperOption">
       <swiper-slide
-        v-for="(card, index) in activeCards"
-        :key="index"
+        v-for="card in activeCards"
+        :key="card.id"
       >
         <CardBox
           :card="card"
+          v-on:resendGet="resendGet"
         />
       </swiper-slide>
-      <template v-if="countMarkedCards() < 6">
+      <template v-if="activeCards.length < 6">
         <swiper-slide 
-          v-for="n in 6 - countMarkedCards()"
+          v-for="n in 6 - activeCards.length"
           :key="n"
         >
           <CardBox
@@ -22,7 +23,32 @@
       </template>
     <div class="swiper-pagination" slot="pagination"></div>
   </swiper>
-  <ChangeSection :activeCards="activeCards" />
+  <swiper id='top-cards-swiper' v-if="inactiveCards.length !== 0" class="swiper mt-5" style="height: 300px" :options="swiperOption">
+      <swiper-slide
+        v-for="card in inactiveCards"
+        :key="card.id"
+      >
+        <CardBox
+          :card="card"
+          v-on:resendGet="resendGet"
+        />
+      </swiper-slide>
+      <template v-if="inactiveCards.length < 12">
+        <swiper-slide 
+          v-for="n in 6 - inactiveCards.length"
+          :key="n"
+        >
+          <CardBox
+            :card="emptyCard"
+          />
+        </swiper-slide>
+      </template>
+    <div class="swiper-pagination" slot="pagination"></div>
+  </swiper>
+  <ChangeSection 
+    :activeCards="activeCards"
+    v-on:resendGet='resendGet'
+  />
 </div>
 </template>
 
@@ -52,6 +78,7 @@ export default {
     return {
       myDetails: {},
       activeCards: [],
+      inactiveCards: [],
       emptyCard: {
         name: 'Empty Slot',
         image: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAACoCAMAAABt9SM9AAAAA1BMVEVxeX67CaE5AAAAR0lEQVR4nO3BAQEAAACCIP+vbkhAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAO8GxYgAAb0jQ/cAAAAASUVORK5CYII=',
@@ -73,10 +100,15 @@ export default {
       }
     }
   },
+  watch: {
+    activeCards () {
+      console.log(this.activeCards)
+    }
+  },
   mounted () {
     this.getMyDetails()
 
-    this.getActiveCards()
+    this.getCards ()
 
     document.title = 'Your Cards | Synergy'
   },
@@ -95,8 +127,11 @@ export default {
 
         this.$store.commit('setIsLoading', false)
     },
-    async getActiveCards () {
+    async getCards () {
       this.$store.commit('setIsLoading', true)
+
+      this.activeCards = []
+      this.inactiveCards = []
 
       await axios
           .get('/api/v1/cards/view')
@@ -104,6 +139,7 @@ export default {
             for (let card in response.data) {
               if (!response.data[card].is_history) 
                 this.activeCards.push(response.data[card])
+              else this.inactiveCards.push(response.data[card])
             }
           })
           .catch(err => {
@@ -121,14 +157,19 @@ export default {
 
       this.$store.commit('setIsLoading', false)
     },
-    countMarkedCards () {
+    countActiveCards () {
       let counter = 0
       for (let card in this.activeCards) {
-        if (this.activeCards[card].is_marked) counter += 1
+        if (!this.activeCards[card].is_history) counter += 1
       }
-      console.log('counter ' + counter)
       return counter
     },
+    resendGet () {
+      
+      this.getCards()
+
+      this.$emit('resendGet')
+    }
   }
 }
 </script>

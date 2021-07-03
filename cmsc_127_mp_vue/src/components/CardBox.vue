@@ -1,7 +1,14 @@
 <template>
-<div @click="$router.push({path: '' + card.get_absolute_url, append: false})" class="wrapper column is-3 position-relative" style="top: 20px;">
+<div class="wrapper column is-3 position-relative" style="top: 20px;">
+  <i @click="markCard" v-if="card.is_marked" class="fas fa-star"></i>
+  <i @click="markCard" v-if="!card.is_marked" class="far fa-star"></i>
+
   <figure class="image">
-    <img :src="card.image" id="card-img" />
+    <img 
+      @click="!card.is_history ? $router.push({path: '' + card.get_absolute_url, append: false}) : $router.push({path: '/history/' + card.get_absolute_url, append: false})" 
+      :src="card.image" 
+      id="card-img" 
+    />
   </figure>
 
   <div class="image-text">
@@ -11,6 +18,8 @@
 </template>
 
 <script>
+import axios from 'axios'
+import {toast} from 'bulma-toast'
 
 export default {
   name: "CardBox",
@@ -18,6 +27,58 @@ export default {
     card: Object,
     myDetails: Object
   },
+  methods: {
+    async markCard () {
+      this.$store.commit('setIsLoading', true)
+
+      await axios({
+      method: 'put',
+      url: '/api/v1/cards/view/',
+      data: {
+        target_card_id: this.card.id,
+        name: this.card.name,
+        description: this.card.description,
+        image: this.card.image,
+        is_marked: !this.card.is_marked,
+        is_visible: this.card.is_visible,
+        is_history: this.card.is_history,
+        slug: this.slugify(this.card.name)
+      }
+      }).then(response => {
+        toast({
+          message: "The card's mark has been successfully changed",
+          type: 'is-success',
+          dismissible: true,
+          pauseOnHover: true,
+          duration: 3000,
+          position: 'bottom-right',
+        })
+        this.newcard = ''
+        this.$emit('resendGet')
+      })
+      .catch(error => {
+        console.log(error)
+        toast({
+            message: 'Something went wrong while marking the card. Please try again.',
+            type: 'is-danger',
+            dismissible: true,
+            pauseOnHover: true,
+            duration: 3000,
+            position: 'bottom-right',
+        })
+      })
+
+      this.$store.commit('setIsLoading', false)
+    },
+    slugify (text) {
+      return text
+        .toLowerCase()
+        .replace(/ /g,'-')
+        .replace(/[-]+/g, '-')
+        .replace(/[^\w-]+/g,'')
+        .replace(/_/g, '')
+    },
+  }
 };
 </script>
 
@@ -39,8 +100,8 @@ export default {
 .image-text {
   z-index: 10;
   position: absolute;
-  color: white;
-  text-align: left;
+  color: black;
+  text-align: center;
   overflow: hidden;
   top: 110px;
   left: 20px;
@@ -59,5 +120,15 @@ export default {
 }
 .button {
   width: 90%;
+}
+</style>
+
+<style scoped>
+.fa-star {
+  position: absolute;
+  top: 50px;
+  left: 215px;
+  z-index: 12;
+  font-size: 22px;
 }
 </style>

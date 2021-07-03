@@ -4,6 +4,8 @@ import Home from '../views/Home.vue'
 
 import store from '../store'
 
+import {toast} from 'bulma-toast'
+
 Vue.use(VueRouter)
 
 const routes = [
@@ -36,28 +38,45 @@ const routes = [
     path: '/profile',
     name: 'Profile',
     component: () => import('../views/Profile.vue'),
-    props: true
+    props: true,
+    meta: {requireLogin: true}
   },
   {
     path: '/:user_slug/:card_slug/',
     name: 'CardView',
     component: () => import('../views/CardView.vue'),
-    props: true
+    props: true,
+    meta: {requireLogin: true}
   },
   {
     path: '/quotes',
     name: 'Quotes',
-    component: () => import('../views/Quotes.vue')
+    component: () => import('../views/Quotes.vue'),
+    meta: {requireLogin: true}
   },
   {
-    path: '/history',
+    path: '/history/:user_slug/:card_slug/',
     name: 'History',
-    component: () => import('../views/History.vue')
+    component: () => import('../views/History.vue'),
+    meta: {requireLogin: true}
   },
   {
     path: '/your-cards',
     name: 'YourCards',
-    component: () => import('../views/YourCards.vue')
+    component: () => import('../views/YourCards.vue'),
+    meta: {requireLogin: true}
+  },
+  {
+    path: '/global',
+    name: 'Global',
+    component: () => import('../views/Global.vue'),
+    meta: {requireLogin: true}
+  },
+  {
+    path: '/search',
+    name: 'Search',
+    component: () => import('../views/Search.vue'),
+    props: true
   },
 ]
 
@@ -68,10 +87,23 @@ const router = new VueRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.matched.some(record => record.meta.requireLogin) && !store.state.isAuthenticated) {
-    next({name: 'Login', query: {to: to.path}})
-  } else {
-    next()
+  if (to.matched.length === 0) {
+    next({path: '/'})
+    toast({
+      message: "The previous url does not exist, you have been redirected to the Homepage",
+      type: 'is-danger',
+      dismissible: true,
+      pauseOnHover: true,
+      duration: 3000,
+      position: 'bottom-right',
+    })
+  }
+  else {
+    if (to.matched.some(record => record.meta.requireLogin) && !store.state.isAuthenticated) {
+      next({path: '/login', query: {to: to.path}})
+    } else {
+      next()
+    }
   }
 })
 

@@ -10,8 +10,9 @@
       </template>
     </p>
     <p class='subtitle' v-for='content in subtitleContent' :key='content'>
-      {{ viewType === content.type ? content.text : '' }}
+      {{ viewType === content.type ? content.text : '' }} 
     </p>
+    <span v-if="cardName !== null && cardName !== ''">{{cardName}}</span>
   </div>
 </section>
 </template>
@@ -30,7 +31,7 @@ export default {
         return {
             subtitleContent: [
                 {type: 'Home', text: 'This is the Home Page'},
-                {type: 'CardView', text: 'You are Viewing: ' + this.cardName},
+                {type: 'CardView', text: 'You are Viewing: '},
                 {type: 'YourCards', text: 'You can Add, Delete, or Modify your Cards Here!'},
                 {type: 'History', text: 'Below are all of your Available Previous Cards'}
             ],

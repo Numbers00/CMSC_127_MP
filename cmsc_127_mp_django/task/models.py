@@ -14,7 +14,7 @@ class Card(models.Model):
     slug = models.SlugField()
 
     class Meta:
-        ordering = ('-date_added',)
+        ordering = ('date_added',)
     
     def __str__(self):
         return self.name
@@ -24,6 +24,7 @@ class Card(models.Model):
 
 class Board(models.Model):
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='boards', on_delete=models.CASCADE)
     card = models.ForeignKey(Card, related_name='boards', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=8060, blank=True, null=True)
@@ -37,7 +38,7 @@ class Board(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return f'/{self.card.user.slug}/{self.card.slug}/{self.slug}/'
+        return f'/{self.user.slug}/{self.card.slug}/{self.slug}/'
 
 class Task(models.Model):
 
@@ -49,6 +50,7 @@ class Task(models.Model):
         (DONE, 'Done')
     )
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='tasks', on_delete=models.CASCADE)
     board = models.ForeignKey(Board, related_name='tasks', on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.CharField(max_length=8060, blank=True, null=True)
@@ -64,4 +66,4 @@ class Task(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return f'/{self.board.card.user.slug}/{self.board.card.slug}/{self.board.slug}/{self.slug}/'
+        return f'/{self.user.slug}/{self.board.card.slug}/{self.board.slug}/{self.slug}/'

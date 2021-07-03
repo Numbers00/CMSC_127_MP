@@ -33,15 +33,14 @@
           </div>
           <template v-if="$store.state.isAuthenticated">
             <template v-if="countMarkedCards() !== 0">
-              <template v-for="card in cards">
+              <template v-for="(card, index) in markedCards">
                 <router-link
-                  :to="'/cards/' + card.get_absolute_url + '/'"
+                  :to="card.get_absolute_url"
                   class='navbar-item'
-                  v-if="card.is_marked"
+                  v-if="card.is_marked && index < 3"
                   :key="card.id"
-                >{{getFirstStr(card.name)}}</router-link>
+                >{{card.name}}</router-link>
               </template>
-              <router-link to="/history" class="navbar-item">History</router-link>
               <router-link to="/your-cards" class="navbar-item">Your Cards</router-link>
             </template>
             <template v-else>
@@ -62,13 +61,10 @@
         <div class="navbar-end">
           <router-link to="/plans" class="navbar-item">Plans</router-link>
           <template v-if="$store.state.isAuthenticated">
-            <router-link to="/global" class="navbar-item">Global</router-link>
-            <router-link to="/quotes" class="navbar-item">Quotes</router-link>
             <router-link to="/profile" class="navbar-item">Profile</router-link>
             <router-link to="/login" class="navbar-item"><p @click="logout()">Logout</p></router-link>
           </template>
           <template v-else>
-            <router-link to="/quotes" class="navbar-item">Quotes</router-link>
             <router-link to="/login" class="navbar-item">Login</router-link>
             <router-link to="/signup" class="navbar-item">Signup</router-link>
           </template>
@@ -80,7 +76,7 @@
       <div class="lds-dual-ring"></div>
     </div>
 
-    <router-view/>
+    <router-view :resendGet="getActiveCards" />
 
     </section>
 
@@ -99,7 +95,8 @@ export default {
   data () {
     return {
       showMobileMenu: false,
-      cards: []
+      activeCards: [],
+      markedCards: []
     }
   },
   beforeCreate () {
@@ -119,23 +116,27 @@ export default {
   },
   watch: {
     cards () {
-      console.log(this.cards)
+      console.log(this.activeCards)
     }
   },
   mounted () {
-    this.getCards()
+    this.getActiveCards()
 
     console.log(this.$store.state.isAuthenticated)
   },
   methods: {
-    async getCards () {
+    async getActiveCards () {
       this.$store.commit('setIsLoading', true)
 
       await axios
           .get('/api/v1/cards/view')
           .then(response => {
-            console.log(response.data)
-            this.cards = response.data
+            this.activeCards = response.data.filter(elem => {
+              return !elem.is_history
+            })
+            this.markedCards = response.data.filter(elem => {
+              return elem.is_marked && !elem.is_history
+            })
           })
           .catch(err => {
               console.log(err)
@@ -164,8 +165,8 @@ export default {
     },
     countMarkedCards () {
       let counter = 0
-      for (let card in this.cards) {
-        if (this.cards[card].is_marked) counter += 1
+      for (let card in this.activeCards) {
+        if (this.activeCards[card].is_marked) counter += 1
       }
       console.log('counter ' + counter)
       return counter
@@ -177,8 +178,8 @@ export default {
   computed: {
     cardViews () {
       let cardViews = []
-      for (let card in this.cards) {
-        cardViews.push(this.cards[card].name)
+      for (let card in this.activeCards) {
+        cardViews.push(this.activeCards[card].name)
       }
 
       return cardViews

@@ -47,7 +47,7 @@
               <div class="col position-relative website" style="top: 12px;">
                 <span class="mx-2"
                   >
-                  <a target="_blank" href="http://agila.upm.edu.ph/~jfcoscolluela/Lab2/index.html">
+                  <a href="#">
                     <i class="fa fa-desktop" aria-hidden="true" style="color: black;"></i>
                   </a>
                 </span>
@@ -102,7 +102,7 @@
               <div class="col position-relative website" style="top: 12px;">
                 <span class="mx-2"
                   >
-                  <a target="_blank" href="http://agila.upm.edu.ph/~blapuz/Beatrice-Portfolio/una.html">
+                  <a href="#">
                     <i class="fa fa-desktop" aria-hidden="true" style="color: black;"></i>
                   </a>
                 </span>
@@ -157,7 +157,7 @@
               <div class="col position-relative website" style="top: 12px;">
                 <span class="mx-2"
                   >
-                  <a target="_blank" href="http://agila.upm.edu.ph/~kmaaquino/CMSC121/personal-website/aboutme.html">
+                  <a href="#">
                     <i class="fa fa-desktop" aria-hidden="true" style="color: black;"></i>
                   </a>
                 </span>
